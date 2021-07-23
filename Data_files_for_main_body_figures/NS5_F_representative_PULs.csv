@@ -1,0 +1,57 @@
+pul_name,contig_name,start,stop,length,Strand,annotation,annotation_full
+PUL_1,DJEFNKPP_00066,67725,69002,1277,0.2,Peptidase,Peptidase
+PUL_1,DJEFNKPP_00067,69529,69113,-416,-0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00068,69596,69757,161,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00069,69768,69992,224,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00070,70068,70781,713,0.2,Other,"Quercetin 2,3-dioxygenase"
+PUL_1,DJEFNKPP_00071,70791,70925,134,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00072,71026,73812,2786,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00073,74092,75552,1460,0.2,Carbohydrate binding module,CBM23&
+PUL_1,DJEFNKPP_00074,75639,76451,812,0.2,Glycoside hydrolase,GH16&GH16
+PUL_1,DJEFNKPP_00075,76474,78750,2276,0.2,Glycoside hydrolase,GH3&GH3
+PUL_1,DJEFNKPP_00076,78793,79335,542,0.2,Glycoside hydrolase,GH16&GH16
+PUL_1,DJEFNKPP_00077,79410,79514,104,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00078,81309,79516,-1793,-0.2,Transporter,Sodium glucose cotransporter
+PUL_1,DJEFNKPP_00079,81455,81354,-101,-0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00081,82573,83910,1337,0.2,Other,Amino-acid carrier protein AlsT
+PUL_1,DJEFNKPP_00082,84032,84478,446,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00083,84574,85224,650,0.2,Other,Beta-phosphoglucomutase
+PUL_1,DJEFNKPP_00084,85224,87530,2306,0.2,Glycoside hydrolase,GH65&GH65
+PUL_1,DJEFNKPP_00085,87532,89361,1829,0.2,Glycoside hydrolase,GH13_20&GH13
+PUL_1,DJEFNKPP_00086,89594,89358,-236,-0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00087,90011,89625,-386,-0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00088,90879,90022,-857,-0.2,Peptidase,Prob. Peptidase
+PUL_1,DJEFNKPP_00089,91070,91570,500,0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00090,92212,91616,-596,-0.2,Hypothetical,hypothetical protein
+PUL_1,DJEFNKPP_00091,92363,92788,425,0.2,Hypothetical,hypothetical protein
+PUL_2,DJEFNKPP_00463,487092,486136,-956,-0.2,Other,Ribose-phosphate pyrophosphokinase
+PUL_2,DJEFNKPP_00464,487292,487176,-116,-0.2,Hypothetical,hypothetical protein
+PUL_2,DJEFNKPP_00465,487195,487277,82,0.2,Other,tRNA-Leu(caa)
+PUL_2,DJEFNKPP_00466,487483,489723,2240,0.2,Polysaccharide lyase,PL17_2&PL17_2
+PUL_2,DJEFNKPP_00467,489739,490086,347,0.2,Hypothetical,hypothetical protein
+PUL_2,DJEFNKPP_00468,490356,493424,3068,0.2,SusC,TonB
+PUL_2,DJEFNKPP_00469,493450,494856,1406,0.2,SusD,SusD-like protein P25
+PUL_2,DJEFNKPP_00470,494919,495833,914,0.2,Sulfatase,Prob. Sulfatase
+PUL_2,DJEFNKPP_00471,495849,496808,959,0.2,Polysaccharide lyase,PL7&PL7
+PUL_2,DJEFNKPP_00472,496886,497578,692,0.2,Other,HTH-type transcriptional regulator LutR
+PUL_2,DJEFNKPP_00473,498275,501406,3131,0.2,SusC,TonB
+PUL_2,DJEFNKPP_00474,501417,502754,1337,0.2,SusD,SusD-like protein P2
+PUL_2,DJEFNKPP_00475,503076,504362,1286,0.2,Transporter,Hexuronate transporter
+PUL_2,DJEFNKPP_00476,504391,505155,764,0.2,Sulfatase,Prob. Sulfatase
+PUL_2,DJEFNKPP_00477,505439,506479,1040,0.2,Other,2-dehydro-3-deoxygluconokinase
+PUL_2,DJEFNKPP_00478,506488,507156,668,0.2,Other,KHG KDPG aldolase
+PUL_2,DJEFNKPP_00479,508088,507216,-872,-0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00793,854241,852682,-1559,-0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00794,854353,855477,1124,0.2,Kinase,Glycerate 2-kinase
+PUL_3,DJEFNKPP_00795,855480,856823,1343,0.2,Transporter,D-serine transporter DsdX
+PUL_3,DJEFNKPP_00796,856864,858075,1211,0.2,Glycoside hydrolase,GH107&GH107
+PUL_3,DJEFNKPP_00797,858170,858937,767,0.2,Sulfatase,Prob. Sulfatase
+PUL_3,DJEFNKPP_00798,859137,861554,2417,0.2,Glycoside hydrolase,GH3&GH33.2.1.21
+PUL_3,DJEFNKPP_00799,863545,861791,-1754,-0.2,Sulfatase,Prob. Sulfatase
+PUL_3,DJEFNKPP_00800,864649,863885,-764,-0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00801,865812,864766,-1046,-0.2,Other,2-dehydro-3-deoxygluconokinase
+PUL_3,DJEFNKPP_00802,866852,866316,-536,-0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00803,866976,868130,1154,0.2,Glycoside hydrolase,GH130&GH130
+PUL_3,DJEFNKPP_00804,868498,869307,809,0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00805,869348,872050,2702,0.2,Hypothetical,hypothetical protein
+PUL_3,DJEFNKPP_00806,872318,872920,602,0.2,Hypothetical,hypothetical protein
