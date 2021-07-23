@@ -1,0 +1,345 @@
+### This script contains the R code that was used to produce figures for the NS5 marine group manuscript. 
+### Not all figures were made in R but above each section of code, the figure name and title is included for reference. 
+### On this repository are the necessary tables which are used throughout this script. Therefore, the code should refer directly to a file available on this repository
+
+###########
+### Figure 3. Examples of the three distribution types observed for NS5 species
+# load packages
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+
+# Import data
+tara_long <- read.table("NS5_distribution_representatives_tara_long_rpkm.csv", sep = ",", header = TRUE)
+
+# generate world map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# extract locations
+world_points <- st_centroid(world)
+
+# extract labels
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+# define variable order
+tara_long$layer <- factor(tara_long$layer, levels = c("Surface", "DCM", "Mesopelagic"))
+
+# Plot
+distrib <- ggplot(data = world) +
+  geom_sf(fill= "gray90") +
+  labs( x = "Longitude", y = "Latitude") +
+  coord_sf(xlim = c(-180.00, 180.00), ylim = c(-90.00, 90.00), expand = FALSE) +
+  geom_point(data=tara_long, 
+             aes(x=Longitude_End, y=Latitude_End, size=RPKM)) + 
+  scale_size(range=c(1,6), breaks=c(0, 3, 6, 9, 12, 15), name = "RPKM") + 
+  theme(panel.grid.major = element_line(colour = "gray", linetype = "dashed", size = 0.1), 
+        panel.background = element_rect(colour = "black", fill="white"), 
+        legend.key = element_blank())
+
+# build facet style plot
+distribution_rep_map <- distrib + facet_grid(MAG~layer) + 
+  theme(strip.background = element_rect(colour="black", fill="white"), 
+        strip.text.x = element_text(size = 12, face = "bold"), 
+        strip.text.y = element_text(size = 8, face = "bold"),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size = 14, face = "bold"),
+        axis.title.x = element_text(size = 14, face = "bold"),
+        axis.title.y = element_text(size = 14, face ="bold"),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10)) 
+
+# save directly to PDF
+pdf(file="Figure_3.pdf", height= 8, width = 10)
+distribution_rep_map
+dev.off()
+
+###########
+### Figure 4. Temporal dynamics of NS5 species-representatives in surface waters at Helgoland Roads, North Sea.
+# Load packages
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+
+# Import data
+NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_2010_2012_relative.csv",header=TRUE, sep = ",",as.is=TRUE)
+View(NS5_Helg)
+
+# Reformat table
+NS5_Helg_long <- melt(NS5_Helg, id.vars=c("Date", "year"), variable.name="MAG", value.name="abund")
+View(NS5_Helg_long)
+
+# Define variables
+NS5_Helg_long$Date <- as.Date(NS5_Helg_long$Date, format="%Y.%m.%d")
+NS5_Helg_long$julian <- format(NS5_Helg_long$Date, "%j")
+NS5_Helg_long$julian <- as.Date(NS5_Helg_long$julian, format="%j")
+MAG <- NS5_Helg_long$MAG
+abund <- NS5_Helg_long$abund
+year <- NS5_Helg_long$year
+
+# Plot and save to PDF
+pdf(file="NS5_MAGs_helgoland_asvs_2010_2012.pdf", width = 10, height = 6)
+p_2 = ggplot(NS5_Helg_long, aes(x=julian, y=abund)) + 
+  geom_bar(aes(fill=MAG), stat="identity", position="stack", width=1.6) + 
+  labs(y="Relative Abundance (%)", fill = "NS5 species representatives") + 
+  scale_x_date(labels=date_format("%d-%m"), date_breaks = "3 weeks") + 
+  #scale_fill_viridis(option="magma", discrete=TRUE)
+  scale_fill_brewer(palette = "Paired")
+p_3 = p_2 + facet_grid(year~., scales = "free") + 
+  theme(panel.background = element_rect(fill = "white", color="black"), #
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "right", 
+        strip.placement = "outside", 
+        panel.spacing = unit(0, "lines"), 
+        strip.background = element_rect(colour="black", fill="white"), 
+        strip.text.y = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size = 12, face = "bold"), 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_text(size = 14, face = "bold"), 
+        axis.text.x = element_text(size = 8, face = "bold", colour = "black", angle=20, hjust=0.95), 
+        axis.text.y = element_text(size = 8, colour = "black")) + 
+  guides(fill=guide_legend(ncol=1))
+  #scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(colourCount))
+#legend.background = element_rect(color="black")) + guides(fill=guide_legend(ncol=2)) + 
+p_3
+dev.off()
+
+###########
+### Figure 5. Summary of substrate utilisation genes annotated in species-representative MAGs
+
+# Load packages
+library(ggplot2)
+library(ggpubr)
+
+# Import data
+ns5_mags = read.table("NS5_cazymes_reps_per_mbp.csv",header=TRUE, sep = ",",as.is=TRUE)
+View(ns5_mags)
+
+# Define colour palette
+cbp1 <- c("#383745ff", "#A17724ff", "#9e9cc2ff", "#f4d4d4ff")
+
+# Plot boxplot of GH genes
+ns5_gh_genes <- ggplot(ns5_mags, aes(x=group, y=GH_mbp, colour=group)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
+  theme(legend.position="none") + 
+  scale_colour_manual(values = c(cbp1)) + 
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.text.x= element_blank(),
+        axis.text.y = element_text(size=14, colour = "black"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=16, face="bold"),
+        panel.background = element_rect(fill = "white", color="black"), 
+        panel.grid.minor = element_blank()) + 
+  labs(y="GH genes per Mbp")
+ns5_gh_genes
+
+# Plot boxplot of peptidase genes
+ns5_peptidase_genes <- ggplot(ns5_mags, aes(x=group, y=peptidase_mbp, colour=group)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
+  theme(legend.position="none") + 
+  scale_colour_manual(values = c(cbp1)) + 
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.text.x= element_blank(),
+        axis.text.y = element_text(size=14, colour = "black"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=16, face="bold"),
+        panel.background = element_rect(fill = "white", color="black"), 
+        panel.grid.minor = element_blank()) + 
+  labs(y="Peptidase genes per Mbp")
+ns5_peptidase_genes
+
+# Plot boxplot of sulfatase genes
+ns5_sulfatase_genes <- ggplot(ns5_mags, aes(x=group, y=sulfatase_mbp, colour=group)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
+  theme(legend.position="none") + 
+  scale_colour_manual(values = c(cbp1)) + 
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.text.x= element_text(size=14, face="bold", colour = "black"),
+        axis.text.y = element_text(size=14, colour = "black"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=16, face="bold"),
+        panel.background = element_rect(fill = "white", color="black"), 
+        panel.grid.minor = element_blank()) + 
+  labs(y="Sulfatase genes per Mbp")
+ns5_sulfatase_genes
+
+# Plot boxplot of TonB-dependent transporter genes
+ns5_tonb_genes <- ggplot(ns5_mags, aes(x=group, y=tonb_mbp, colour=group)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
+  theme(legend.position="none") + 
+  scale_colour_manual(values = c(cbp1)) + 
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.text.x= element_text(size=14, face="bold", colour = "black"),
+        axis.text.y = element_text(size=14, colour = "black"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=16, face="bold"),
+        panel.background = element_rect(fill = "white", color="black"), 
+        panel.grid.minor = element_blank()) + 
+  labs(y="TonB transporter genes per Mbp")
+ns5_tonb_genes
+
+# Arrange the four plots and save to PDF
+pdf(file="NS5_cazymes_reps_per_mbp_boxplot.pdf", height = 10, width = 10)
+ggarrange(ns5_gh_genes, ns5_peptidase_genes, ns5_sulfatase_genes, ns5_tonb_genes, labels=c("a", "b", "c", "d"), 
+          ncol=2, nrow=2, align="v")
+dev.off()
+
+###########
+### Figure 6. Comparison of the substrate utlisation gene composition between species-representatives
+
+# Load packages
+library(dendsort)
+library(ggplot2)
+library(ggdendro)
+library(RColorBrewer)
+library(vegan)
+library(ggpubr)
+library(ggrepel)
+library(dendextend)
+library(dplyr)
+library(patchwork)
+
+# Import data
+NS5_cazy = read.table("NS5_species_reps_substrate_genes_all.csv",header=TRUE, sep = ",", row.names = 1, as.is=TRUE)
+View(NS5_cazy)
+NS5_meta = read.table("NS5_species_reps_substrate_genes_all_groups.csv",header=TRUE, sep = ",", as.is=TRUE)
+View(NS5_meta)
+
+# Calculate distance matrix and run non-metric mutli-dimensional scaling
+NS5_cazy_bray<-vegdist(NS5_cazy, distance = "bray", na.rm=TRUE)
+NS5_cazy_mds<-metaMDS(NS5_cazy_bray, distance="bray")
+
+# Hierarchical clustering of species
+clus1 <- hclust(NS5_cazy_bray, method="complete")
+cazy_all_dendrogram <- as.dendrogram(clus1)
+
+# Extract data from cluster dendrogram
+dendrogram_data <- dendro_data(cazy_all_dendrogram)
+dendrogram_segments <- dendrogram_data$segments
+dendrogram_ends <- dendrogram_segments %>%
+  filter(yend == 0) %>% # filter for terminal dendrogram ends
+  left_join(dendrogram_data$labels, by = "x") %>% # .$labels contains the row names from dist_matrix (i.e., sample_name)
+  rename(mag = label) %>%
+  left_join(NS5_meta, by = "mag") 
+
+# dataframe now contains only terminal dendrogram segments and merged associated metadata
+
+# Assign colours to groups
+genus_color <- c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")
+
+# Plot dendrogram with dendrogram ends coloured according to genus and shapes to represent isolation source of species
+par(mfrow=c(1,1))
+
+NS5_cazy_dendrogram <- ggplot() + 
+  geom_segment(data = dendrogram_segments, aes(x=x, y=y, xend=xend, yend=yend)) +
+  geom_segment(data = dendrogram_ends, aes(x=x, y=y.x, xend=xend, yend=yend, color = Genus), size = 2) + 
+  #geom_text(data = dendogram_ends, aes(x=x, y=y.x, label=location), hjust=1, nudge_y = 1) + ##this line can be used to add MAG names to dendrogram segments 
+  geom_point(data=dendrogram_ends, aes(x=x, y=y.y, shape=Isolation_source), position = 
+               position_nudge(y=0.02), size=4) + 
+  scale_color_manual(values = genus_color) + 
+  scale_shape_manual(values=c(19, 6, 15, 17, 5, 0, 1, 2, 7, 23)) + 
+  scale_y_reverse() +
+  coord_flip() + 
+  guides(color=FALSE) + 
+  ylab("Distance") + xlab("Species") + # flipped x and y coordinates for aesthetic reasons 
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(colour = "black", size = 10), 
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+NS5_cazy_dendogram
+
+# Figure 6b. NMDS plot
+
+# Create dataframe containing the NMDS coordinates along with metadata
+site_scores = as.data.frame(scores(NS5_cazy_mds, display="sites"))
+site_scores = cbind(site_scores, Genus_a=NS5_meta$Genus)
+site_scores = cbind(site_scores, bin=row.names(NS5_cazy))
+site_scores = cbind(site_scores, Isolation_source_a=NS5_meta$Isolation_source)
+colnames(site_scores) <- c('NMDS1', 'NMDS2', 'Group', 'MAG', 'Source')
+
+# Create dataframe for coordinates of hulls which will group points based on genus affiliation
+hull_A <- site_scores[site_scores$Group == "NS5_A", ][chull(site_scores[site_scores$Group == "NS5_A", c("NMDS1", "NMDS2")]), ]
+hull_B <- site_scores[site_scores$Group == "NS5_B", ][chull(site_scores[site_scores$Group == "NS5_B", c("NMDS1", "NMDS2")]), ]
+hull_D <- site_scores[site_scores$Group == "NS5_D", ][chull(site_scores[site_scores$Group == "NS5_D", c("NMDS1", "NMDS2")]), ]
+hull_F <- site_scores[site_scores$Group == "NS5_F", ][chull(site_scores[site_scores$Group == "NS5_F", c("NMDS1", "NMDS2")]), ]
+hull_positions <- rbind(hull_A, hull_B, hull_D, hull_F)
+
+# Plot NMDS with shapes for isolation source and colours for genus, hulls are also included and coloured for the genera
+nmds_all <- ggplot(site_scores) + 
+  geom_point(site_scores, mapping = aes(x=NMDS1, y=NMDS2, colour=Group, shape=Source), size=4) + 
+  geom_polygon(data=hull_positions, aes(x=NMDS1, y=NMDS2, fill=Group, group=Group), alpha=0.30) + 
+  #geom_text_repel(aes(NMDS1, NMDS2, label=bin), size=4) + ## this line can be used to add MAG names to points
+    scale_shape_manual(values = c(15, 16, 17, 18, 0, 1, 2, 5, 6, 7)) + 
+    scale_color_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
+    scale_fill_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
+    coord_fixed() + 
+    theme_classic() +
+    guides(fill = FALSE) + 
+    theme(panel.background = element_rect(fill=NA, colour="black", size=1, linetype="solid")) + 
+    labs(colour="Genus", shape = "Isolation_source") + 
+    theme(legend.position="right", 
+          legend.text=element_text(size=12, colour = "black"), 
+          legend.title=element_text(size=14, face = "bold", colour = "black"), 
+          axis.title.x = element_text(colour = "black", face = "bold", size = 14), 
+          axis.title.y = element_text(colour = "black", face = "bold", size = 14))
+nmds_all
+
+# Combine both plots and save to PDF 
+# NOTE: the asterix which indicates the isolate genome was overlayed in Inkscape
+pdf(file="Figure_6.pdf", height = 8, width = 14)
+NS5_cazy_dendogram + nmds_all
+dev.off()
+
+###########
+### Figure 7. Examples of polysaccharide utilisation loci that contain gene colocalisations conserved across a genus
+# This plot can not be directly reproduced only in RStudio. Plotting gene arrows is a difficult process, particularly from multiple files and with respect to labelling
+# the genes in a clean format
+# Therefore, the following script will plot the PULs of a single organism. In Figure 7, there are PULs from two organisms plotted, but only those PULs from those organisms
+# that were identified as conserved across the genera
+# After plotting both sets of PULs, the images were imported to Inkscape and formatted there
+# This script effectively provides the base level arrow plots and the legend and the rest is manual work
+
+# Load packages
+library(ggplot2)
+library(gggenes)
+library(ggfittext)
+
+# Import data
+fram_pul = read.table("NS5_F_representative_PULs.csv",header=TRUE, sep = ",",as.is=TRUE)
+View(fram_pul)
+
+# Define colours for different genes
+
+pulcol_NS5 <- c("Auxiliary activity" = "#57b3b8", "Carbohydrate binding module" = "#c87137", 
+            "Glycoside hydrolase" = "#b3de69", "Hypothetical" = "#c8beb7",
+            "Carbohydrate esterase" = "#000000", "Kinase" = "#ffeeaa", 
+            "Isomerase" = "#ffeeaa", "Peptidase" = "#800080", "Polysaccharide lyase" = "#0095d1",
+            "Other" = "#ffffff",
+            "Sulfatase" = "#ffcc00", "SusC" = "#ff6600", 
+            "SusD" = "#ff00ff", "Transporter" = "#de8787")
+            
+colourCount=length(unique(fram_pul$annotation))
+
+# Plot gene arrows and save to PDF
+pdf("MSM95_H_re_metabat_bin_11_1_PULs.pdf", height=10, width=10)
+ggplot(fram_pul, aes(xmin = start, xmax = stop, y = pul_name, fill = annotation, 
+                     forward = Strand)) +
+  geom_gene_arrow() + 
+  facet_wrap(~ pul_name, scales = "free", ncol = 1) +
+  theme_genes() + 
+  scale_fill_manual(values = pulcol_NS5) + 
+  guides(fill=guide_legend(title = "Gene")) + 
+  theme(legend.title = element_text(face = "bold", size = 12),
+        legend.text = element_text(size=10))
+dev.off()
