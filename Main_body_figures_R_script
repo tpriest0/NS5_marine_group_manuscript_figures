@@ -445,7 +445,7 @@ library(gggenes)
 library(ggfittext)
 
 # Import data
-fram_pul = read.table("representative_puls.csv",header=TRUE, sep = ",",as.is=TRUE)
+fram_pul = read.table("NS5_F_representative_puls.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(fram_pul)
 
 # Define colours for gene types
