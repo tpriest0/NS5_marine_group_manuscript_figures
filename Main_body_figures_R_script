@@ -2,41 +2,57 @@
 ### Not all figures were made in R but above each section of code, the figure name and title is included for reference. 
 ### On this repository are the necessary tables which are used throughout this script. Therefore, the code should refer directly to a file available on this repository
 
-###########
-### Figure 3. Examples of the three distribution types observed for NS5 species
-# load packages
-library(ggplot2)
-library(sf)
-library(rnaturalearth)
+#### NS5 manuscript figures by Taylor Priest
+####
 
+###########
+### Figure 1 - Phylogenetic tree reconstruction of the NS5 marine group
+# Plot was not created in R
+
+###########
+### Figure 2 - Visualisation of cells from NS5_A and NS5_F
+# Plot was not created in R
+
+###########
+### Figure 3 - Three select species that represent different distrbution types 
+### observed across the NS5 and their dynamics across abiotic parameters
+# Load necessary libraries
+library(ggplot2)
+library("sf")
+library("rnaturalearth")
+library("rnaturalearthdata")
+
+# PART A
 # Import data
-tara_long <- read.table("NS5_distribution_representatives_tara_long_rpkm.csv", sep = ",", header = TRUE)
+select_tara_meta=read.table("three_select_species_rpkm_and_tara_meta.csv",header=TRUE, sep = ",",as.is=TRUE)
+View(select_tara_meta)
 
 # generate world map
-world <- ne_countries(scale = "medium", returnclass = "sf")
+world_1 <- sf::st_as_sf(rworldmap::getMap(resolution = "low"))
+sf::sf_use_s2(FALSE)
 
-# extract locations
-world_points <- st_centroid(world)
+# Define order of variables and colour palette
+select_tara_meta$layer <- factor(select_tara_meta$layer, levels = c("Surface", "DCM", "Mesopelagic"))
+colourCount=length(unique(select_tara_meta$MAG))
+cbp2 <- c("#A17724ff", "#9e9cc2ff", "#f4d4d4ff")
 
-# extract labels
-world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
-
-# define variable order
-tara_long$layer <- factor(tara_long$layer, levels = c("Surface", "DCM", "Mesopelagic"))
-
-# Plot
-distrib <- ggplot(data = world) +
-  geom_sf(fill= "gray90") +
-  labs( x = "Longitude", y = "Latitude") +
-  coord_sf(xlim = c(-180.00, 180.00), ylim = c(-90.00, 90.00), expand = FALSE) +
-  geom_point(data=tara_long, 
-             aes(x=Longitude_End, y=Latitude_End, size=RPKM)) + 
-  scale_size(range=c(1,6), breaks=c(0, 3, 6, 9, 12, 15), name = "RPKM") + 
+# Base plot
+distrib <- ggplot(data = world_1) +
+  geom_sf() +
+  theme_bw() + 
+  coord_sf(expand = FALSE) + 
+  scale_x_continuous(breaks = c(-90, 0, 90)) + 
+  scale_y_continuous(breaks = c(-50, 0, 50)) + 
+  labs(x = "Longitude", y = "Latitude") +
+  geom_point(data=select_tara_meta, 
+             aes(x=Longitude, y=Latitude, size=RPKM, colour = MAG)) + 
+  scale_colour_manual(values=cbp2) + 
+  scale_size(range=c(1,6), breaks=c(0, 3, 6, 9, 12, 15), name = "RPKM") +
   theme(panel.grid.major = element_line(colour = "gray", linetype = "dashed", size = 0.1), 
         panel.background = element_rect(colour = "black", fill="white"), 
         legend.key = element_blank())
 
-# build facet style plot
+# Faceted plot
 distribution_rep_map <- distrib + facet_grid(MAG~layer) + 
   theme(strip.background = element_rect(colour="black", fill="white"), 
         strip.text.x = element_text(size = 12, face = "bold"), 
@@ -48,23 +64,133 @@ distribution_rep_map <- distrib + facet_grid(MAG~layer) +
         axis.text.x = element_text(size = 10),
         axis.text.y = element_text(size = 10)) 
 
-# save directly to PDF
-pdf(file="Figure_3.pdf", height= 8, width = 10)
-distribution_rep_map
+# PART B
+# Define colours
+colourCount=length(unique(select_tara_meta$MAG))
+
+# Base plot for temperature
+select_species_temp <- ggplot(select_tara_meta, aes(x=RPKM, y=Temperature)) + 
+  geom_point(aes(colour=factor(MAG)), size=2) +
+  #scale_y_reverse() + 
+  labs(y="Temperature (°C)", x="RPKM", colour="MAG") + 
+  theme_bw() + 
+  theme(panel.background = element_rect(fill = "white", color="black"),
+        panel.grid.major.y = element_line(colour="grey95"),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        legend.position = "right", 
+        legend.text = element_text(size=12),
+        legend.title = element_text(size = 12, face = "bold"), 
+        axis.title.x = element_text(size = 14, face = "bold"), 
+        axis.title.y = element_text(size = 14, face = "bold"), 
+        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
+        axis.text.y = element_text(size = 10, colour = "black"),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
+  #scale_colour_manual(values = ns5_col) + 
+  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
+  scale_colour_manual(values=cbp2)
+
+# Base plot for salinity
+select_species_salinity <- ggplot(select_tara_meta, aes(x=RPKM, y=Salinity)) + 
+  geom_point(aes(colour=factor(MAG)), size=2) +
+  #scale_y_reverse() + 
+  labs(y="Salinity (psu)", x="RPKM", colour="MAG") + 
+  theme_bw() + 
+  theme(panel.background = element_rect(fill = "white", color="black"),
+        panel.grid.major.y = element_line(colour="grey95"),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        legend.position = "right", 
+        legend.text = element_text(size=12),
+        legend.title = element_text(size = 12, face = "bold"), 
+        axis.title.x = element_text(size = 14, face = "bold"), 
+        axis.title.y = element_text(size = 14, face = "bold"), 
+        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
+        axis.text.y = element_text(size = 10, colour = "black"),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
+  #scale_colour_manual(values = ns5_col) + 
+  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
+  scale_colour_manual(values=cbp2)
+
+# Base plot for nitrogen species
+select_species_nitrogen <- ggplot(select_tara_meta, aes(x=RPKM, y=Nitrate_nitrite)) + 
+  geom_point(aes(colour=factor(MAG)), size=2) +
+  #scale_y_reverse() + 
+  labs(y="Nitrate + nitrite (µM)", x="RPKM", colour="MAG") + 
+  theme_bw() + 
+  theme(panel.background = element_rect(fill = "white", color="black"),
+        panel.grid.major.y = element_line(colour="grey95"),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        legend.position = "right", 
+        legend.text = element_text(size=12),
+        legend.title = element_text(size = 12, face = "bold"), 
+        axis.title.x = element_text(size = 14, face = "bold"), 
+        axis.title.y = element_text(size = 14, face = "bold"), 
+        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
+        axis.text.y = element_text(size = 10, colour = "black"),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
+  #scale_colour_manual(values = ns5_col) + 
+  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
+  scale_colour_manual(values=cbp2)
+
+# Base plot for oxygen
+select_species_oxygen <- ggplot(select_tara_meta, aes(x=RPKM, y=Oxygen)) + 
+  geom_point(aes(colour=factor(MAG)), size=2) +
+  #scale_y_reverse() + 
+  labs(y="Oxygen (µM)", x="RPKM", colour="MAG") + 
+  theme_bw() + 
+  theme(panel.background = element_rect(fill = "white", color="black"),
+        panel.grid.major.y = element_line(colour="grey95"),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        legend.position = "right", 
+        legend.text = element_text(size=12),
+        legend.title = element_text(size = 12, face = "bold"), 
+        axis.title.x = element_text(size = 14, face = "bold"), 
+        axis.title.y = element_text(size = 14, face = "bold"), 
+        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
+        axis.text.y = element_text(size = 10, colour = "black"),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
+  #scale_colour_manual(values = ns5_col) + 
+  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
+  scale_colour_manual(values=cbp2)
+
+# Use ggarrange to organise the four abiotic variable plots together that make up PART B
+rpkm_vs_abiotic_variables <- ggarrange(select_species_temp + rremove("xlab"), select_species_salinity + rremove("xlab"),
+                                       select_species_nitrogen, select_species_oxygen, 
+                                       ncol=2, nrow=2, align="v", common.legend = TRUE, 
+                                       legend = c("right")) + 
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))
+
+# Use ggarrange to organise PART A and PART B into a single plot
+figure_3 <- ggarrange(distribution_rep_map, rpkm_vs_abiotic_variables, 
+                      labels=c("a", "b"), ncol=1, nrow=2, align="v") + 
+  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))
+
+# Save plot
+pdf(file = "Figure_3.pdf", width = 14, height = 14)
+figure_3
 dev.off()
 
+
 ###########
-### Figure 4. Temporal dynamics of NS5 species-representatives in surface waters at Helgoland Roads, North Sea.
-# Load packages
+### Figure 4 - Temporal dynamics of NS5 species-representatives in surfce waters at 
+### Helgoland Roads, North Sea
+# Import necessary libraries
 library(ggplot2)
 library(reshape2)
-library(RColorBrewer)
+library(scales)
 
 # Import data
-NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_2010_2012_relative.csv",header=TRUE, sep = ",",as.is=TRUE)
+NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_100_mod_2010_2012_rel.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(NS5_Helg)
 
-# Reformat table
+# Transpose to long format
 NS5_Helg_long <- melt(NS5_Helg, id.vars=c("Date", "year"), variable.name="MAG", value.name="abund")
 View(NS5_Helg_long)
 
@@ -76,15 +202,18 @@ MAG <- NS5_Helg_long$MAG
 abund <- NS5_Helg_long$abund
 year <- NS5_Helg_long$year
 
-# Plot and save to PDF
-pdf(file="NS5_MAGs_helgoland_asvs_2010_2012.pdf", width = 10, height = 6)
-p_2 = ggplot(NS5_Helg_long, aes(x=julian, y=abund)) + 
+oligo_cols <- c("#44aa00", "#784421", "#decd87", "#ffe680", "#0044aa", "#87cdde")
+
+# Base plot
+base_oligo = ggplot(NS5_Helg_long, aes(x=julian, y=abund)) + 
   geom_bar(aes(fill=MAG), stat="identity", position="stack", width=1.6) + 
   labs(y="Relative Abundance (%)", fill = "NS5 species representatives") + 
   scale_x_date(labels=date_format("%d-%m"), date_breaks = "3 weeks") + 
   #scale_fill_viridis(option="magma", discrete=TRUE)
-  scale_fill_brewer(palette = "Paired")
-p_3 = p_2 + facet_grid(year~., scales = "free") + 
+  scale_fill_manual(values=oligo_cols)
+
+# Facet plot
+facet_oligo = base_oligo + facet_grid(year~., scales = "free") + 
   theme(panel.background = element_rect(fill = "white", color="black"), #
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = "right", 
@@ -99,103 +228,105 @@ p_3 = p_2 + facet_grid(year~., scales = "free") +
         axis.text.x = element_text(size = 8, face = "bold", colour = "black", angle=20, hjust=0.95), 
         axis.text.y = element_text(size = 8, colour = "black")) + 
   guides(fill=guide_legend(ncol=1))
-  #scale_fill_manual(values = colorRampPalette(brewer.pal(12, "Paired"))(colourCount))
-#legend.background = element_rect(color="black")) + guides(fill=guide_legend(ncol=2)) + 
-p_3
+
+# Save figure
+pdf(file="Figure_4.pdf", width = 10, height = 6)
+facet_oligo
 dev.off()
 
-###########
-### Figure 5. Summary of substrate utilisation genes annotated in species-representative MAGs
 
-# Load packages
+###########
+### Figure 5 - boxplot of summary statistics
+
+# Import libraries
 library(ggplot2)
 library(ggpubr)
 
 # Import data
-ns5_mags = read.table("NS5_cazymes_reps_per_mbp.csv",header=TRUE, sep = ",",as.is=TRUE)
+ns5_mags = read.table("mag_statistics_r.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(ns5_mags)
 
 # Define colour palette
 cbp1 <- c("#383745ff", "#A17724ff", "#9e9cc2ff", "#f4d4d4ff")
 
-# Plot boxplot of GH genes
-ns5_gh_genes <- ggplot(ns5_mags, aes(x=group, y=GH_mbp, colour=group)) + 
+# Completeness plot
+ns5_comp_box <- ggplot(ns5_mags, aes(x=genus, y=completeness, colour=genus)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
   geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
   theme(legend.position="none") + 
   scale_colour_manual(values = c(cbp1)) + 
   theme_bw() + 
   theme(legend.position = "none",
-        axis.text.x= element_blank(),
-        axis.text.y = element_text(size=14, colour = "black"),
+        axis.text.x= element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14),
         axis.title.x = element_blank(),
         axis.title.y = element_text(size=16, face="bold"),
         panel.background = element_rect(fill = "white", color="black"), 
         panel.grid.minor = element_blank()) + 
-  labs(y="GH genes per Mbp")
-ns5_gh_genes
+  labs(y="Completeness (%)")
 
-# Plot boxplot of peptidase genes
-ns5_peptidase_genes <- ggplot(ns5_mags, aes(x=group, y=peptidase_mbp, colour=group)) + 
+# Contamination plot
+ns5_cont_box <- ggplot(ns5_mags, aes(x=genus, y=contamination, colour=genus)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
   geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
   theme(legend.position="none") + 
   scale_colour_manual(values = c(cbp1)) + 
   theme_bw() + 
   theme(legend.position = "none",
-        axis.text.x= element_blank(),
-        axis.text.y = element_text(size=14, colour = "black"),
+        axis.text.x= element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14),
         axis.title.x = element_blank(),
         axis.title.y = element_text(size=16, face="bold"),
         panel.background = element_rect(fill = "white", color="black"), 
         panel.grid.minor = element_blank()) + 
-  labs(y="Peptidase genes per Mbp")
-ns5_peptidase_genes
+  labs(y="Contamination (%)")
 
-# Plot boxplot of sulfatase genes
-ns5_sulfatase_genes <- ggplot(ns5_mags, aes(x=group, y=sulfatase_mbp, colour=group)) + 
+# Genome size plot
+ns5_size_box <- ggplot(ns5_mags, aes(x=genus, y=genome_size, colour=genus)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
   geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
   theme(legend.position="none") + 
   scale_colour_manual(values = c(cbp1)) + 
   theme_bw() + 
   theme(legend.position = "none",
-        axis.text.x= element_text(size=14, face="bold", colour = "black"),
-        axis.text.y = element_text(size=14, colour = "black"),
+        axis.text.x= element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14),
         axis.title.x = element_blank(),
         axis.title.y = element_text(size=16, face="bold"),
         panel.background = element_rect(fill = "white", color="black"), 
         panel.grid.minor = element_blank()) + 
-  labs(y="Sulfatase genes per Mbp")
-ns5_sulfatase_genes
+  labs(y="Genome size (Mbp)")
 
-# Plot boxplot of TonB-dependent transporter genes
-ns5_tonb_genes <- ggplot(ns5_mags, aes(x=group, y=tonb_mbp, colour=group)) + 
+# GC plot
+ns5_gc_box <- ggplot(ns5_mags, aes(x=genus, y=GC, colour=genus)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16, lwd = 1) + 
   geom_dotplot(binaxis='y', stackdir='center', dotsize=1) + 
   theme(legend.position="none") + 
   scale_colour_manual(values = c(cbp1)) + 
   theme_bw() + 
   theme(legend.position = "none",
-        axis.text.x= element_text(size=14, face="bold", colour = "black"),
-        axis.text.y = element_text(size=14, colour = "black"),
+        axis.text.x= element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14),
         axis.title.x = element_blank(),
         axis.title.y = element_text(size=16, face="bold"),
         panel.background = element_rect(fill = "white", color="black"), 
         panel.grid.minor = element_blank()) + 
-  labs(y="TonB transporter genes per Mbp")
-ns5_tonb_genes
+  labs(y="GC content (%)")
 
-# Arrange the four plots and save to PDF
-pdf(file="NS5_cazymes_reps_per_mbp_boxplot.pdf", height = 10, width = 10)
-ggarrange(ns5_gh_genes, ns5_peptidase_genes, ns5_sulfatase_genes, ns5_tonb_genes, labels=c("a", "b", "c", "d"), 
+# Use ggarrange to align plots into a single figure
+boxplot_summary <- ggarrange(ns5_comp_box, ns5_cont_box, ns5_size_box, ns5_gc_box, labels=c("a", "b", "c", "d"), 
           ncol=2, nrow=2, align="v")
+
+# Save figure
+pdf(file="Figure_5.pdf", width = 10, height = 6)
+boxplot_summary
 dev.off()
 
-###########
-### Figure 6. Comparison of the substrate utlisation gene composition between species-representatives
 
-# Load packages
+###########
+### Figure 6: Comparison of substrate utilisation gene composition between species-representatives
+
+# Import necessary libraries
 library(dendsort)
 library(ggplot2)
 library(ggdendro)
@@ -205,7 +336,6 @@ library(ggpubr)
 library(ggrepel)
 library(dendextend)
 library(dplyr)
-library(patchwork)
 
 # Import data
 NS5_cazy = read.table("NS5_species_reps_substrate_genes_all.csv",header=TRUE, sep = ",", row.names = 1, as.is=TRUE)
@@ -213,15 +343,13 @@ View(NS5_cazy)
 NS5_meta = read.table("NS5_species_reps_substrate_genes_all_groups.csv",header=TRUE, sep = ",", as.is=TRUE)
 View(NS5_meta)
 
-# Calculate distance matrix and run non-metric mutli-dimensional scaling
+# PART A
+# Calculate distance matrix based on CAZyme composition and calculate dendrogram
 NS5_cazy_bray<-vegdist(NS5_cazy, distance = "bray", na.rm=TRUE)
-NS5_cazy_mds<-metaMDS(NS5_cazy_bray, distance="bray")
-
-# Hierarchical clustering of species
 clus1 <- hclust(NS5_cazy_bray, method="complete")
 cazy_all_dendrogram <- as.dendrogram(clus1)
 
-# Extract data from cluster dendrogram
+# Extract dendrogram data
 dendrogram_data <- dendro_data(cazy_all_dendrogram)
 dendrogram_segments <- dendrogram_data$segments
 dendrogram_ends <- dendrogram_segments %>%
@@ -235,7 +363,7 @@ dendrogram_ends <- dendrogram_segments %>%
 # Assign colours to groups
 genus_color <- c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")
 
-# Plot dendrogram with dendrogram ends coloured according to genus and shapes to represent isolation source of species
+# Plot dendrogram with dendrogram ends coloured according to genus
 par(mfrow=c(1,1))
 
 NS5_cazy_dendrogram <- ggplot() + 
@@ -257,82 +385,78 @@ NS5_cazy_dendrogram <- ggplot() +
         axis.title.x = element_blank(),
         axis.title.y = element_blank())
 
-NS5_cazy_dendogram
+# PART B
+# NMDS plot
 
-# Figure 6b. NMDS plot
-
-# Create dataframe containing the NMDS coordinates along with metadata
+# Compute NMDS based on bray-curtis dissimilarities and extract data
+NS5_cazy_mds<-metaMDS(NS5_cazy_bray, distance="bray")
 site_scores = as.data.frame(scores(NS5_cazy_mds, display="sites"))
 site_scores = cbind(site_scores, Genus_a=NS5_meta$Genus)
 site_scores = cbind(site_scores, bin=row.names(NS5_cazy))
 site_scores = cbind(site_scores, Isolation_source_a=NS5_meta$Isolation_source)
+
+# Assign colours
 colnames(site_scores) <- c('NMDS1', 'NMDS2', 'Group', 'MAG', 'Source')
 
-# Create dataframe for coordinates of hulls which will group points based on genus affiliation
+# Compute the hull data
 hull_A <- site_scores[site_scores$Group == "NS5_A", ][chull(site_scores[site_scores$Group == "NS5_A", c("NMDS1", "NMDS2")]), ]
 hull_B <- site_scores[site_scores$Group == "NS5_B", ][chull(site_scores[site_scores$Group == "NS5_B", c("NMDS1", "NMDS2")]), ]
 hull_D <- site_scores[site_scores$Group == "NS5_D", ][chull(site_scores[site_scores$Group == "NS5_D", c("NMDS1", "NMDS2")]), ]
 hull_F <- site_scores[site_scores$Group == "NS5_F", ][chull(site_scores[site_scores$Group == "NS5_F", c("NMDS1", "NMDS2")]), ]
 hull_positions <- rbind(hull_A, hull_B, hull_D, hull_F)
 
-# Plot NMDS with shapes for isolation source and colours for genus, hulls are also included and coloured for the genera
-nmds_all <- ggplot(site_scores) + 
+# Plot NMDS
+nmds_CAZymes <- ggplot(site_scores) + 
   geom_point(site_scores, mapping = aes(x=NMDS1, y=NMDS2, colour=Group, shape=Source), size=4) + 
   geom_polygon(data=hull_positions, aes(x=NMDS1, y=NMDS2, fill=Group, group=Group), alpha=0.30) + 
   #geom_text_repel(aes(NMDS1, NMDS2, label=bin), size=4) + ## this line can be used to add MAG names to points
-    scale_shape_manual(values = c(15, 16, 17, 18, 0, 1, 2, 5, 6, 7)) + 
-    scale_color_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
-    scale_fill_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
-    coord_fixed() + 
-    theme_classic() +
-    guides(fill = FALSE) + 
-    theme(panel.background = element_rect(fill=NA, colour="black", size=1, linetype="solid")) + 
-    labs(colour="Genus", shape = "Isolation_source") + 
-    theme(legend.position="right", 
-          legend.text=element_text(size=12, colour = "black"), 
-          legend.title=element_text(size=14, face = "bold", colour = "black"), 
-          axis.title.x = element_text(colour = "black", face = "bold", size = 14), 
-          axis.title.y = element_text(colour = "black", face = "bold", size = 14))
-nmds_all
+  scale_shape_manual(values = c(15, 16, 17, 18, 0, 1, 2, 5, 6, 7)) + 
+  scale_color_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
+  scale_fill_manual(values = c("NS5_A" = "#383745ff", "NS5_B" = "#a17724ff", "NS5_D" = "#9e9cc2ff", "NS5_F" = "#f4d4d4ff")) + 
+  coord_fixed() + 
+  theme_classic() +
+  guides(fill = FALSE) + 
+  theme(panel.background = element_rect(fill=NA, colour="black", size=1, linetype="solid")) + 
+  labs(colour="Genus", shape = "Isolation_source") + 
+  theme(legend.position="right", 
+        legend.text=element_text(size=12, colour = "black"), 
+        legend.title=element_text(size=14, face = "bold", colour = "black"), 
+        axis.title.x = element_text(colour = "black", face = "bold", size = 14), 
+        axis.title.y = element_text(colour = "black", face = "bold", size = 14))
 
-# Combine both plots and save to PDF 
-# NOTE: the asterix which indicates the isolate genome was overlayed in Inkscape
+# Use ggarrange to align plots into a single figure
+Figure_6 <- ggarrange(NS5_cazy_dendrogram, nmds_CAZymes, labels=c("a", "b"), 
+                             ncol=2, nrow=1, align="h")
+
+
 pdf(file="Figure_6.pdf", height = 8, width = 14)
-NS5_cazy_dendogram + nmds_all
+Figure_6
 dev.off()
 
-###########
-### Figure 7. Examples of polysaccharide utilisation loci that contain gene colocalisations conserved across a genus
-# This plot can not be directly reproduced only in RStudio. Plotting gene arrows is a difficult process, particularly from multiple files and with respect to labelling
-# the genes in a clean format
-# Therefore, the following script will plot the PULs of a single organism. In Figure 7, there are PULs from two organisms plotted, but only those PULs from those organisms
-# that were identified as conserved across the genera
-# After plotting both sets of PULs, the images were imported to Inkscape and formatted there
-# This script effectively provides the base level arrow plots and the legend and the rest is manual work
 
-# Load packages
+###########
+### Figure 7
+# This plot is not directly reproducible, as the labelling of genes was performed in InkScape after creation
+# However, the PUL structures and associated legends can be produced with this code
+
+# Import necessary libraries
 library(ggplot2)
 library(gggenes)
 library(ggfittext)
 
 # Import data
-fram_pul = read.table("NS5_F_representative_PULs.csv",header=TRUE, sep = ",",as.is=TRUE)
+fram_pul = read.table("representative_puls.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(fram_pul)
 
-# Define colours for different genes
+# Define colours for gene types
+pulcol_NS5 <- c("Carbohydrate binding module" = "#c87137", 
+                "Glycoside hydrolase" = "#b3de69", "Hypothetical" = "#c8beb7",
+                "Carbohydrate esterase" = "#000000", "Kinase" = "#ffeeaa", 
+                "Isomerase" = "#ffeeaa", "Peptidase" = "#800080", "Polysaccharide lyase" = "#0095d1",
+                "Other" = "#ffffff",
+                "Sulfatase" = "#ffcc00", "SusC" = "#ff6600", 
+                "SusD" = "#ff00ff", "Transporter" = "#de8787")
 
-pulcol_NS5 <- c("Auxiliary activity" = "#57b3b8", "Carbohydrate binding module" = "#c87137", 
-            "Glycoside hydrolase" = "#b3de69", "Hypothetical" = "#c8beb7",
-            "Carbohydrate esterase" = "#000000", "Kinase" = "#ffeeaa", 
-            "Isomerase" = "#ffeeaa", "Peptidase" = "#800080", "Polysaccharide lyase" = "#0095d1",
-            "Other" = "#ffffff",
-            "Sulfatase" = "#ffcc00", "SusC" = "#ff6600", 
-            "SusD" = "#ff00ff", "Transporter" = "#de8787")
-            
-colourCount=length(unique(fram_pul$annotation))
-
-# Plot gene arrows and save to PDF
-pdf("MSM95_H_re_metabat_bin_11_1_PULs.pdf", height=10, width=10)
 ggplot(fram_pul, aes(xmin = start, xmax = stop, y = pul_name, fill = annotation, 
                      forward = Strand)) +
   geom_gene_arrow() + 
@@ -340,6 +464,17 @@ ggplot(fram_pul, aes(xmin = start, xmax = stop, y = pul_name, fill = annotation,
   theme_genes() + 
   scale_fill_manual(values = pulcol_NS5) + 
   guides(fill=guide_legend(title = "Gene")) + 
-  theme(legend.title = element_text(face = "bold", size = 12),
-        legend.text = element_text(size=10))
+  theme(legend.title = element_text(face = "bold", size = 14),
+        legend.text = element_text(size=12))
+
+pdf("Figure_7.pdf", height=10, width=10)
+Figure_7
 dev.off()
+
+
+##################################################
+
+##################################################
+
+
+##################################################
