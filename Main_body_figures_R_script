@@ -187,7 +187,7 @@ library(reshape2)
 library(scales)
 
 # Import data
-NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_100_mod_2010_2012_rel.csv",header=TRUE, sep = ",",as.is=TRUE)
+NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_2010_2012_relative.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(NS5_Helg)
 
 # Transpose to long format
