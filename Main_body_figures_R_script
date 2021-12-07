@@ -1,7 +1,3 @@
-### This script contains the R code that was used to produce figures for the NS5 marine group manuscript. 
-### Not all figures were made in R but above each section of code, the figure name and title is included for reference. 
-### On this repository are the necessary tables which are used throughout this script. Therefore, the code should refer directly to a file available on this repository
-
 #### NS5 manuscript figures by Taylor Priest
 ####
 
@@ -21,6 +17,10 @@ library(ggplot2)
 library("sf")
 library("rnaturalearth")
 library("rnaturalearthdata")
+library(dplyr)
+library(ggpubr)
+library(ggExtra)
+library(cowplot)
 
 # PART A
 # Import data
@@ -33,7 +33,6 @@ sf::sf_use_s2(FALSE)
 
 # Define order of variables and colour palette
 select_tara_meta$layer <- factor(select_tara_meta$layer, levels = c("Surface", "DCM", "Mesopelagic"))
-colourCount=length(unique(select_tara_meta$MAG))
 cbp2 <- c("#A17724ff", "#9e9cc2ff", "#f4d4d4ff")
 
 # Base plot
@@ -46,8 +45,9 @@ distrib <- ggplot(data = world_1) +
   labs(x = "Longitude", y = "Latitude") +
   geom_point(data=select_tara_meta, 
              aes(x=Longitude, y=Latitude, size=RPKM, colour = MAG)) + 
+  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
   scale_colour_manual(values=cbp2) + 
-  scale_size(range=c(1,6), breaks=c(0, 3, 6, 9, 12, 15), name = "RPKM") +
+  scale_size(range=c(1,6), breaks=c(1, 2, 4, 8, 16, 32), name = "RPKM") +
   theme(panel.grid.major = element_line(colour = "gray", linetype = "dashed", size = 0.1), 
         panel.background = element_rect(colour = "black", fill="white"), 
         legend.key = element_blank())
@@ -55,127 +55,196 @@ distrib <- ggplot(data = world_1) +
 # Faceted plot
 distribution_rep_map <- distrib + facet_grid(MAG~layer) + 
   theme(strip.background = element_rect(colour="black", fill="white"), 
-        strip.text.x = element_text(size = 12, face = "bold"), 
-        strip.text.y = element_text(size = 8, face = "bold"),
+        strip.text.x = element_text(size = 14, face = "bold"), 
+        strip.text.y = element_text(size = 11, face = "bold"),
         legend.text = element_text(size=12),
         legend.title = element_text(size = 14, face = "bold"),
         axis.title.x = element_text(size = 14, face = "bold"),
         axis.title.y = element_text(size = 14, face ="bold"),
         axis.text.x = element_text(size = 10),
         axis.text.y = element_text(size = 10)) 
-
+distribution_rep_map
 # PART B
-# Define colours
-colourCount=length(unique(select_tara_meta$MAG))
+# Define order
+select_tara_meta$MAG <- factor(select_tara_meta$MAG,levels=unique(select_tara_meta$MAG))
 
-# Base plot for temperature
-select_species_temp <- ggplot(select_tara_meta, aes(x=RPKM, y=Temperature)) + 
-  geom_point(aes(colour=factor(MAG)), size=2) +
-  #scale_y_reverse() + 
-  labs(y="Temperature (°C)", x="RPKM", colour="MAG") + 
-  theme_bw() + 
-  theme(panel.background = element_rect(fill = "white", color="black"),
-        panel.grid.major.y = element_line(colour="grey95"),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.x = element_blank(), 
-        panel.grid.minor.x = element_blank(),
-        legend.position = "right", 
-        legend.text = element_text(size=12),
-        legend.title = element_text(size = 12, face = "bold"), 
-        axis.title.x = element_text(size = 14, face = "bold"), 
-        axis.title.y = element_text(size = 14, face = "bold"), 
-        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
-        axis.text.y = element_text(size = 10, colour = "black"),
-        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-  #scale_colour_manual(values = ns5_col) + 
-  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
-  scale_colour_manual(values=cbp2)
+# Temperature: RPKM vs Temperature scatter plot 
+temp_scatter <- ggscatter(select_tara_meta, x = "RPKM", y = "Temperature",
+                          color = "MAG", size = 3, alpha = 1,
+                          palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+temp_scatter_ref <- ggpar(temp_scatter, 
+                          legend = "none", 
+                          xlab = "RPKM", 
+                          ylab = "Temperature (°C)",
+                          ggtheme = theme(panel.background = element_rect(fill = "white", color="black"),
+                                          panel.grid.major.y = element_line(colour="grey95"),
+                                          panel.grid.minor.y = element_blank(),
+                                          panel.grid.major.x = element_blank(), 
+                                          panel.grid.minor.x = element_blank(),
+                                          axis.title.x = element_text(size = 14, face = "bold"), 
+                                          axis.title.y = element_text(size = 14, face = "bold"), 
+                                          axis.text.x = element_text(size = 12, colour = "black"), 
+                                          axis.text.y = element_text(size = 12, colour = "black")))
+# Temperature: Density plot
+y_temp_marg_plot <- ggdensity(select_tara_meta, x = "Temperature", fill = "MAG",
+                         palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+y_temp_marg_plot_ref <- ggpar(y_temp_marg_plot, legend = "none", 
+                         orientation = "horiz", tickslab = FALSE, 
+                         xlab = FALSE, ylab = FALSE, xscale = "none", 
+                         ggtheme = theme(panel.background = element_rect(fill = "white"), 
+                                         axis.line.x = element_blank(), 
+                                         axis.ticks.x = element_blank(),
+                                         panel.border = element_blank(),
+                                         panel.grid.major.y = element_blank(),
+                                         panel.grid.minor.y = element_blank(),
+                                         panel.grid.major.x = element_blank(), 
+                                         panel.grid.minor.x = element_blank(),
+                                         axis.title.x = element_text(size = 14, face = "bold"), 
+                                         axis.title.y = element_text(size = 14, face = "bold"), 
+                                         axis.text.x = element_text(size = 12, colour = "black"), 
+                                         axis.text.y = element_text(size = 12, colour = "black")))
+# Temperature: combine plots using cowplot
 
-# Base plot for salinity
-select_species_salinity <- ggplot(select_tara_meta, aes(x=RPKM, y=Salinity)) + 
-  geom_point(aes(colour=factor(MAG)), size=2) +
-  #scale_y_reverse() + 
-  labs(y="Salinity (psu)", x="RPKM", colour="MAG") + 
-  theme_bw() + 
-  theme(panel.background = element_rect(fill = "white", color="black"),
-        panel.grid.major.y = element_line(colour="grey95"),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.x = element_blank(), 
-        panel.grid.minor.x = element_blank(),
-        legend.position = "right", 
-        legend.text = element_text(size=12),
-        legend.title = element_text(size = 12, face = "bold"), 
-        axis.title.x = element_text(size = 14, face = "bold"), 
-        axis.title.y = element_text(size = 14, face = "bold"), 
-        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
-        axis.text.y = element_text(size = 10, colour = "black"),
-        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-  #scale_colour_manual(values = ns5_col) + 
-  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
-  scale_colour_manual(values=cbp2)
+select_species_temp_density <- plot_grid(temp_scatter_ref, y_temp_marg_plot_ref, ncol = 2, align="h", rel_widths = c(2,1))
+select_species_temp_density
 
-# Base plot for nitrogen species
-select_species_nitrogen <- ggplot(select_tara_meta, aes(x=RPKM, y=Nitrate_nitrite)) + 
-  geom_point(aes(colour=factor(MAG)), size=2) +
-  #scale_y_reverse() + 
-  labs(y="Nitrate + nitrite (µM)", x="RPKM", colour="MAG") + 
-  theme_bw() + 
-  theme(panel.background = element_rect(fill = "white", color="black"),
-        panel.grid.major.y = element_line(colour="grey95"),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.x = element_blank(), 
-        panel.grid.minor.x = element_blank(),
-        legend.position = "right", 
-        legend.text = element_text(size=12),
-        legend.title = element_text(size = 12, face = "bold"), 
-        axis.title.x = element_text(size = 14, face = "bold"), 
-        axis.title.y = element_text(size = 14, face = "bold"), 
-        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
-        axis.text.y = element_text(size = 10, colour = "black"),
-        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-  #scale_colour_manual(values = ns5_col) + 
-  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
-  scale_colour_manual(values=cbp2)
 
-# Base plot for oxygen
-select_species_oxygen <- ggplot(select_tara_meta, aes(x=RPKM, y=Oxygen)) + 
-  geom_point(aes(colour=factor(MAG)), size=2) +
-  #scale_y_reverse() + 
-  labs(y="Oxygen (µM)", x="RPKM", colour="MAG") + 
-  theme_bw() + 
-  theme(panel.background = element_rect(fill = "white", color="black"),
-        panel.grid.major.y = element_line(colour="grey95"),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.x = element_blank(), 
-        panel.grid.minor.x = element_blank(),
-        legend.position = "right", 
-        legend.text = element_text(size=12),
-        legend.title = element_text(size = 12, face = "bold"), 
-        axis.title.x = element_text(size = 14, face = "bold"), 
-        axis.title.y = element_text(size = 14, face = "bold"), 
-        axis.text.x = element_text(size = 10, face = "bold", colour = "black"), 
-        axis.text.y = element_text(size = 10, colour = "black"),
-        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
-  #scale_colour_manual(values = ns5_col) + 
-  guides(colour = guide_legend(override.aes = list(size=5), ncol=1)) + 
-  scale_colour_manual(values=cbp2)
+## Salinity: RPKM vs Salinity scatter plot 
+salinity_scatter <- ggscatter(select_tara_meta, x = "RPKM", y = "Salinity",
+                          color = "MAG", size = 3, alpha = 1,
+                          palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+salinity_scatter_ref <- ggpar(salinity_scatter, 
+                          legend = "none", 
+                          xlab = "RPKM", 
+                          ylab = "Salinity (psu)",
+                          ggtheme = theme(panel.background = element_rect(fill = "white", color="black"),
+                                          panel.grid.major.y = element_line(colour="grey95"),
+                                          panel.grid.minor.y = element_blank(),
+                                          panel.grid.major.x = element_blank(), 
+                                          panel.grid.minor.x = element_blank(),
+                                          axis.title.x = element_text(size = 14, face = "bold"), 
+                                          axis.title.y = element_text(size = 14, face = "bold"), 
+                                          axis.text.x = element_text(size = 12, colour = "black"), 
+                                          axis.text.y = element_text(size = 12, colour = "black")))
+# Salinity: Density plot
+y_salinity_marg_plot <- ggdensity(select_tara_meta, x = "Salinity", fill = "MAG",
+                                  palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+y_salinity_marg_plot_ref <- ggpar(y_salinity_marg_plot, legend = "none", 
+                              orientation = "horiz", tickslab = FALSE, 
+                              xlab = FALSE, ylab = FALSE, xscale = "none", 
+                              ggtheme = theme(panel.background = element_rect(fill = "white"), 
+                                              axis.line.x = element_blank(), 
+                                              axis.ticks.x = element_blank(),
+                                              panel.border = element_blank(),
+                                              panel.grid.major.y = element_blank(),
+                                              panel.grid.minor.y = element_blank(),
+                                              panel.grid.major.x = element_blank(), 
+                                              panel.grid.minor.x = element_blank(),
+                                              axis.title.x = element_text(size = 14, face = "bold"), 
+                                              axis.title.y = element_text(size = 14, face = "bold"), 
+                                              axis.text.x = element_text(size = 12, colour = "black"), 
+                                              axis.text.y = element_text(size = 12, colour = "black")))
+# Salinity: combine plots using cowplot
 
-# Use ggarrange to organise the four abiotic variable plots together that make up PART B
-rpkm_vs_abiotic_variables <- ggarrange(select_species_temp + rremove("xlab"), select_species_salinity + rremove("xlab"),
-                                       select_species_nitrogen, select_species_oxygen, 
-                                       ncol=2, nrow=2, align="v", common.legend = TRUE, 
-                                       legend = c("right")) + 
-  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))
+select_species_salinity_density <- plot_grid(salinity_scatter_ref, y_salinity_marg_plot_ref, ncol = 2, align="h", rel_widths = c(2,1))
+select_species_salinity_density
 
-# Use ggarrange to organise PART A and PART B into a single plot
-figure_3 <- ggarrange(distribution_rep_map, rpkm_vs_abiotic_variables, 
-                      labels=c("a", "b"), ncol=1, nrow=2, align="v") + 
-  theme(plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"))
 
-# Save plot
-pdf(file = "Figure_3.pdf", width = 14, height = 14)
-figure_3
+## Nitrogen: RPKM vs Nitrogen scatter plot 
+nitrogen_scatter <- ggscatter(select_tara_meta, x = "RPKM", y = "Nitrate_nitrite",
+                              color = "MAG", size = 3, alpha = 1,
+                              palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+nitrogen_scatter_ref <- ggpar(nitrogen_scatter, 
+                              legend = "none", 
+                              xlab = "RPKM", 
+                              ylab = "Nitrate + nitrite (µM)",
+                              ggtheme = theme(panel.background = element_rect(fill = "white", color="black"),
+                                              panel.grid.major.y = element_line(colour="grey95"),
+                                              panel.grid.minor.y = element_blank(),
+                                              panel.grid.major.x = element_blank(), 
+                                              panel.grid.minor.x = element_blank(),
+                                              axis.title.x = element_text(size = 14, face = "bold"), 
+                                              axis.title.y = element_text(size = 14, face = "bold"), 
+                                              axis.text.x = element_text(size = 12, colour = "black"), 
+                                              axis.text.y = element_text(size = 12, colour = "black")))
+# Nitrogen: Density plot
+y_nitrogen_marg_plot <- ggdensity(select_tara_meta, x = "Nitrate_nitrite", fill = "MAG",
+                                  palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+y_nitrogen_marg_plot_ref <- ggpar(y_nitrogen_marg_plot, legend = "none", 
+                                  orientation = "horiz", tickslab = FALSE, 
+                                  xlab = FALSE, ylab = FALSE, xscale = "none", 
+                                  ggtheme = theme(panel.background = element_rect(fill = "white"), 
+                                                  axis.line.x = element_blank(), 
+                                                  axis.ticks.x = element_blank(),
+                                                  panel.border = element_blank(),
+                                                  panel.grid.major.y = element_blank(),
+                                                  panel.grid.minor.y = element_blank(),
+                                                  panel.grid.major.x = element_blank(), 
+                                                  panel.grid.minor.x = element_blank(),
+                                                  axis.title.x = element_text(size = 14, face = "bold"), 
+                                                  axis.title.y = element_text(size = 14, face = "bold"), 
+                                                  axis.text.x = element_text(size = 12, colour = "black"), 
+                                                  axis.text.y = element_text(size = 12, colour = "black")))
+# Nitrogen: combine plots using cowplot
+
+select_species_nitrogen_density <- plot_grid(nitrogen_scatter_ref, y_nitrogen_marg_plot_ref, ncol = 2, align="h", rel_widths = c(2,1))
+select_species_nitrogen_density
+
+
+## Oxygen: RPKM vs Oxygen scatter plot 
+oxygen_scatter <- ggscatter(select_tara_meta, x = "RPKM", y = "Oxygen",
+                              color = "MAG", size = 3, alpha = 1,
+                            palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+oxygen_scatter_ref <- ggpar(oxygen_scatter, 
+                              legend = "none", 
+                              xlab = "RPKM", 
+                              ylab = "Oxygen (µM)",
+                              ggtheme = theme(panel.background = element_rect(fill = "white", color="black"),
+                                              panel.grid.major.y = element_line(colour="grey95"),
+                                              panel.grid.minor.y = element_blank(),
+                                              panel.grid.major.x = element_blank(), 
+                                              panel.grid.minor.x = element_blank(),
+                                              axis.title.x = element_text(size = 14, face = "bold"), 
+                                              axis.title.y = element_text(size = 14, face = "bold"), 
+                                              axis.text.x = element_text(size = 12, colour = "black"), 
+                                              axis.text.y = element_text(size = 12, colour = "black")))
+# Oxygen: Density plot
+y_oxygen_marg_plot <- ggdensity(select_tara_meta, x = "Oxygen", fill = "MAG",
+                                palette = c("#9e9cc2ff", "#f4d4d4ff", "#A17724ff"))
+y_oxygen_marg_plot_ref <- ggpar(y_oxygen_marg_plot, legend = "none", 
+                                  orientation = "horiz", tickslab = FALSE, 
+                                  xlab = FALSE, ylab = FALSE, xscale = "none", 
+                                  ggtheme = theme(panel.background = element_rect(fill = "white"), 
+                                                  axis.line.x = element_blank(), 
+                                                  axis.ticks.x = element_blank(),
+                                                  panel.border = element_blank(),
+                                                  panel.grid.major.y = element_blank(),
+                                                  panel.grid.minor.y = element_blank(),
+                                                  panel.grid.major.x = element_blank(), 
+                                                  panel.grid.minor.x = element_blank(),
+                                                  axis.title.x = element_text(size = 14, face = "bold"), 
+                                                  axis.title.y = element_text(size = 14, face = "bold"), 
+                                                  axis.text.x = element_text(size = 12, colour = "black"), 
+                                                  axis.text.y = element_text(size = 12, colour = "black")))
+# Oxygen: combine plots using cowplot
+select_species_oxygen_density <- plot_grid(oxygen_scatter_ref, y_oxygen_marg_plot_ref, ncol = 2, align="h", 
+                                           rel_widths = c(2,1))
+select_species_oxygen_density
+
+## Combine all plots
+Figure_3_abiotic <- plot_grid(select_species_temp_density, select_species_salinity_density,
+                      select_species_nitrogen_density, select_species_oxygen_density, ncol=2, align="hv")
+Figure_3_abiotic
+
+Figure_3_all <- plot_grid(distribution_rep_map, Figure_3_abiotic, ncol = 1, nrow = 2, 
+                          axis = "tblr", align="hv", rel_heights = c(1,1), labels = c("a","b"))
+Figure_3_all
+
+# Save figure
+pdf(file="Figure_3.pdf", width = 14, height = 12)
+Figure_3_all
 dev.off()
+
 
 
 ###########
@@ -187,7 +256,7 @@ library(reshape2)
 library(scales)
 
 # Import data
-NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_2010_2012_relative.csv",header=TRUE, sep = ",",as.is=TRUE)
+NS5_Helg=read.table("NS5_MAG_Helgoland_oligo_counts_100_mod_2010_2012_rel.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(NS5_Helg)
 
 # Transpose to long format
@@ -315,7 +384,7 @@ ns5_gc_box <- ggplot(ns5_mags, aes(x=genus, y=GC, colour=genus)) +
 
 # Use ggarrange to align plots into a single figure
 boxplot_summary <- ggarrange(ns5_comp_box, ns5_cont_box, ns5_size_box, ns5_gc_box, labels=c("a", "b", "c", "d"), 
-          ncol=2, nrow=2, align="v")
+                             ncol=2, nrow=2, align="v")
 
 # Save figure
 pdf(file="Figure_5.pdf", width = 10, height = 6)
@@ -426,7 +495,7 @@ nmds_CAZymes <- ggplot(site_scores) +
 
 # Use ggarrange to align plots into a single figure
 Figure_6 <- ggarrange(NS5_cazy_dendrogram, nmds_CAZymes, labels=c("a", "b"), 
-                             ncol=2, nrow=1, align="h")
+                      ncol=2, nrow=1, align="h")
 
 
 pdf(file="Figure_6.pdf", height = 8, width = 14)
@@ -445,7 +514,7 @@ library(gggenes)
 library(ggfittext)
 
 # Import data
-fram_pul = read.table("NS5_F_representative_puls.csv",header=TRUE, sep = ",",as.is=TRUE)
+fram_pul = read.table("representative_puls.csv",header=TRUE, sep = ",",as.is=TRUE)
 View(fram_pul)
 
 # Define colours for gene types
@@ -477,4 +546,3 @@ dev.off()
 ##################################################
 
 
-##################################################
